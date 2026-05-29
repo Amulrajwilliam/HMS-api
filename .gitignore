@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Secrets — never commit
+.env
+.env.local
+.env.production
+
+# Local uploads (avatars, reports)
+uploads/
+
+# Logs & OS
+*.log
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+
+# Archives / accidental copies
+dist.zip
+HMS/
+
+# Empty placeholder files
+fly
