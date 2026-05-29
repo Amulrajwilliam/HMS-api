@@ -29,6 +29,10 @@ import { IpAllowlistModule } from './common/guards/ip-allowlist.module';
 import { CommonServicesModule } from './common/common-services.module';
 
 import { TYPEORM_ENTITIES } from './database/typeorm-entities';
+import {
+  postgresSslOption,
+  redisConnectionFromConfig,
+} from './config/runtime-data-stores';
 
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
@@ -42,11 +46,7 @@ import { AppService } from './app.service';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (cfg: ConfigService) => ({
-        connection: {
-          host: cfg.get('REDIS_HOST', '127.0.0.1'),
-          port: cfg.get<number>('REDIS_PORT', 6379),
-          password: cfg.get('REDIS_PASSWORD') || undefined,
-        },
+        connection: redisConnectionFromConfig(cfg),
       }),
     }),
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
@@ -63,6 +63,7 @@ import { AppService } from './app.service';
               ? false
               : !isProd;
 
+        const ssl = postgresSslOption(cfg);
         return {
           type: 'postgres',
           host: cfg.get('DB_HOST', 'localhost'),
@@ -70,6 +71,7 @@ import { AppService } from './app.service';
           username: cfg.get('DB_USER', 'postgres'),
           password: cfg.get('DB_PASSWORD', 'postgres'),
           database: cfg.get('DB_NAME', 'hms_db'),
+          ...(ssl ? { ssl } : {}),
           entities: [...TYPEORM_ENTITIES],
           migrations: [join(__dirname, 'database', 'migrations', '*.{ts,js}')],
           migrationsRun: cfg.get('DB_MIGRATIONS_RUN') === 'true',

@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
+import { redisConnectionFromConfig } from '../../config/runtime-data-stores';
 
 /**
  * Redis-backed ephemeral key/value store with in-memory fallback when Redis is unavailable.
@@ -16,14 +17,13 @@ export class EphemeralStoreService implements OnModuleInit, OnModuleDestroy {
   constructor(private readonly config: ConfigService) {}
 
   async onModuleInit() {
-    const host = this.config.get<string>('REDIS_HOST', '127.0.0.1');
-    const port = this.config.get<number>('REDIS_PORT', 6379);
-    const password = this.config.get<string>('REDIS_PASSWORD') || undefined;
+    const { host, port, password, tls } = redisConnectionFromConfig(this.config);
 
     const client = new Redis({
       host,
       port,
       password,
+      ...(tls ? { tls } : {}),
       maxRetriesPerRequest: 1,
       connectTimeout: 3000,
       lazyConnect: true,
