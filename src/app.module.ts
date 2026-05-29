@@ -30,7 +30,7 @@ import { CommonServicesModule } from './common/common-services.module';
 
 import { TYPEORM_ENTITIES } from './database/typeorm-entities';
 import {
-  postgresSslOption,
+  postgresTypeOrmSsl,
   redisConnectionFromConfig,
 } from './config/runtime-data-stores';
 
@@ -63,7 +63,7 @@ import { AppService } from './app.service';
               ? false
               : !isProd;
 
-        const ssl = postgresSslOption(cfg);
+        const pgSsl = postgresTypeOrmSsl(cfg);
         return {
           type: 'postgres',
           host: cfg.get('DB_HOST', 'localhost'),
@@ -71,7 +71,8 @@ import { AppService } from './app.service';
           username: cfg.get('DB_USER', 'postgres'),
           password: cfg.get('DB_PASSWORD', 'postgres'),
           database: cfg.get('DB_NAME', 'hms_db'),
-          ...(ssl ? { ssl } : {}),
+          ...pgSsl,
+          extra: pgSsl.ssl ? { ssl: { rejectUnauthorized: false } } : undefined,
           entities: [...TYPEORM_ENTITIES],
           migrations: [join(__dirname, 'database', 'migrations', '*.{ts,js}')],
           migrationsRun: cfg.get('DB_MIGRATIONS_RUN') === 'true',

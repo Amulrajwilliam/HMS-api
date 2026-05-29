@@ -2,11 +2,11 @@ import { config } from 'dotenv';
 import { join } from 'path';
 import { DataSource } from 'typeorm';
 import { TYPEORM_ENTITIES } from './typeorm-entities';
-import { postgresSslOption } from '../config/runtime-data-stores';
+import { postgresTypeOrmSsl } from '../config/runtime-data-stores';
 
 config({ path: join(__dirname, '..', '..', '.env') });
 
-const ssl = postgresSslOption(process.env);
+const sslOpts = postgresTypeOrmSsl(process.env);
 
 export default new DataSource({
   type: 'postgres',
@@ -15,7 +15,8 @@ export default new DataSource({
   username: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || 'postgres',
   database: process.env.DB_NAME || 'hms_db',
-  ...(ssl ? { ssl } : {}),
+  ...sslOpts,
+  extra: sslOpts.ssl ? { ssl: { rejectUnauthorized: false } } : undefined,
   entities: [...TYPEORM_ENTITIES],
   migrations: [join(__dirname, 'migrations', '*.ts')],
   synchronize: false,

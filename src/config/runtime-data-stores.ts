@@ -13,9 +13,24 @@ export function postgresSslOption(
   if (explicit === 'true') return { rejectUnauthorized: false };
   if (explicit === 'false') return false;
 
+  // Render / Neon: always use SSL in production
+  if (get('NODE_ENV') === 'production') return { rejectUnauthorized: false };
+
   const host = get('DB_HOST', 'localhost') ?? 'localhost';
-  const isLocal = host === 'localhost' || host === '127.0.0.1' || host === '::1';
+  const isLocal =
+    host === 'localhost' ||
+    host === '127.0.0.1' ||
+    host === '::1' ||
+    host.startsWith('192.168.');
   return isLocal ? false : { rejectUnauthorized: false };
+}
+
+/** TypeORM + node-pg SSL (Neon requires sslmode=require). */
+export function postgresTypeOrmSsl(
+  cfg: ConfigService | NodeJS.ProcessEnv,
+): { ssl: { rejectUnauthorized: boolean } } | Record<string, never> {
+  const ssl = postgresSslOption(cfg);
+  return ssl ? { ssl } : {};
 }
 
 export function redisConnectionFromConfig(cfg: ConfigService) {
