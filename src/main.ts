@@ -30,6 +30,22 @@ function logLanAccessUrls(port: number, logger: Logger) {
   }
 }
 
+function productionCorsOrigins(): string[] {
+  const origins: string[] = [];
+  const add = (raw?: string) => {
+    if (!raw) return;
+    const normalized = raw.trim().replace(/\/+$/, '');
+    if (normalized) origins.push(normalized);
+  };
+  add(process.env.WEB_URL);
+  for (const part of (process.env.CORS_EXTRA_ORIGINS || '').split(',')) add(part);
+  add('http://localhost:3001');
+  add('http://localhost:3000');
+  add('http://127.0.0.1:3001');
+  add('http://127.0.0.1:3000');
+  return [...new Set(origins)];
+}
+
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
@@ -38,20 +54,13 @@ async function bootstrap() {
 
   const isProd = process.env.NODE_ENV === 'production';
   if (isProd) {
-    const defaultOrigins = [
-      process.env.WEB_URL || 'http://localhost:3001',
-      'http://localhost:3001',
-      'http://localhost:3000',
-      'http://127.0.0.1:3001',
-      'http://127.0.0.1:3000',
-    ];
-    const extra = (process.env.CORS_EXTRA_ORIGINS || '')
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean);
+    const origins = productionCorsOrigins();
+    logger.log(`CORS allowed origins: ${origins.join(', ')}`);
     app.enableCors({
-      origin: [...new Set([...defaultOrigins, ...extra])],
+      origin: origins,
       credentials: true,
+      methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
     });
   } else {
     // Dev: allow any origin so Expo Go / Vite on --host / LAN IPs are not blocked by CORS.
