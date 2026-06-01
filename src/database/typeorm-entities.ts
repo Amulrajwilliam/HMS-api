@@ -29,6 +29,10 @@ import {
   NursingEwsScore,
   NursingFlowsheetEntry,
 } from '../modules/nursing/entities/nursing-chart.entity';
+import { VisitCheckIn } from '../modules/frontdesk/entities/visit-check-in.entity';
+import { AppointmentWaitlist } from '../modules/frontdesk/entities/appointment-waitlist.entity';
+import { ReminderCampaignLog } from '../modules/frontdesk/entities/reminder-campaign-log.entity';
+import { PatientMergeLog } from '../modules/frontdesk/entities/patient-merge-log.entity';
 
 export const TYPEORM_ENTITIES = [
   User,
@@ -62,4 +66,8 @@ export const TYPEORM_ENTITIES = [
   NursingCarePlan,
   NursingEwsScore,
   EmarAdministration,
+  VisitCheckIn,
+  AppointmentWaitlist,
+  ReminderCampaignLog,
+  PatientMergeLog,
 ] as const;

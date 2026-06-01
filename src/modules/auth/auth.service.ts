@@ -102,7 +102,7 @@ export class AuthService {
 
     await this.ephemeralStore.delete(`login:${emailKey}`);
 
-    const challenge = await this.maybeAdminTwoFactorChallenge(user);
+    const challenge = await this.maybeTwoFactorChallenge(user);
     if (challenge) return challenge;
 
     const tokens = await this.generateTokens(user);
@@ -110,6 +110,7 @@ export class AuthService {
 
     return {
       user: this.toPublicUser(user),
+      securityPolicy: await this.buildSecurityPolicyForUser(user),
       ...tokens,
     };
   }
@@ -164,14 +165,39 @@ export class AuthService {
     await this.ephemeralStore.setJson(key, cur, LOGIN_LOCKOUT_MS);
   }
 
-  /** When admin 2FA is enforced, return a challenge instead of tokens. */
-  private async maybeAdminTwoFactorChallenge(user: User) {
+  private isStaffRole(role: Role): boolean {
+    return role !== Role.PATIENT;
+  }
+
+  private userRequiresTwoFactor(user: User, sec: Awaited<ReturnType<AuthService['getHospitalSecurityCached']>>): boolean {
+    if (user.role === Role.ADMIN && sec.enforce2faAdmin) return true;
+    if (this.isStaffRole(user.role) && sec.enforce2faStaff) return true;
+    return false;
+  }
+
+  private async buildSecurityPolicyForUser(user: User) {
     const sec = await this.getHospitalSecurityCached();
-    if (user.role !== Role.ADMIN || !sec.enforce2faAdmin) return null;
+    const mustEnable2fa = this.userRequiresTwoFactor(user, sec) && !user.totpEnabled;
+    return {
+      sessionTimeoutMinutes: sec.sessionTimeoutMinutes,
+      enforce2faAdmin: sec.enforce2faAdmin,
+      enforce2faStaff: sec.enforce2faStaff,
+      mustEnable2fa,
+    };
+  }
+
+  /** When 2FA is enforced for the role, return a challenge instead of tokens. */
+  private async maybeTwoFactorChallenge(user: User) {
+    const sec = await this.getHospitalSecurityCached();
+    if (!this.userRequiresTwoFactor(user, sec)) return null;
 
     if (!user.totpEnabled) {
+      const scope =
+        user.role === Role.ADMIN
+          ? 'administrator'
+          : 'staff';
       throw new ForbiddenException(
-        'Two-factor authentication must be enabled on this administrator account. Sign in as another administrator to disable "Enforce 2FA for admins" under Hospital settings until you enroll 2FA, or enroll 2FA using an existing session.',
+        `Two-factor authentication must be enabled on this ${scope} account. An administrator can disable enforcement under Hospital settings → Security, or enroll 2FA from an existing session.`,
       );
     }
 
@@ -216,7 +242,10 @@ export class AuthService {
 
   async me(userId: string) {
     const user = await this.usersService.findById(userId);
-    return this.toPublicUser(user);
+    return {
+      ...this.toPublicUser(user),
+      securityPolicy: await this.buildSecurityPolicyForUser(user),
+    };
   }
 
   async updateMe(userId: string, dto: UpdateMeDto) {
@@ -325,7 +354,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const challenge = await this.maybeAdminTwoFactorChallenge(user);
+    const challenge = await this.maybeTwoFactorChallenge(user);
     if (challenge) return challenge;
 
     const tokens = await this.generateTokens(user);
@@ -333,6 +362,7 @@ export class AuthService {
 
     return {
       user: this.toPublicUser(user),
+      securityPolicy: await this.buildSecurityPolicyForUser(user),
       ...tokens,
     };
   }
@@ -423,7 +453,11 @@ export class AuthService {
 
     const tokens = await this.generateTokens(user);
     await this.usersService.updateRefreshToken(user.id, tokens.refreshToken);
-    return { user: this.toPublicUser(user), ...tokens };
+    return {
+      user: this.toPublicUser(user),
+      securityPolicy: await this.buildSecurityPolicyForUser(user),
+      ...tokens,
+    };
   }
 
   async createTotpSetup(userId: string) {

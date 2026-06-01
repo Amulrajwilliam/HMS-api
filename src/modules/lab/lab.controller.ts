@@ -58,7 +58,7 @@ export class LabController {
   }
 
   @Get('orders/pending-count')
-  @Roles(Role.ADMIN, Role.LAB)
+  @Roles(Role.ADMIN, Role.LAB, Role.NURSE)
   pendingCount() {
     return this.svc.getPendingCount();
   }

@@ -11,6 +11,8 @@ import { PatientsService } from '../patients/patients.service';
 import { UsersService } from '../users/users.service';
 import { PharmacyService } from '../pharmacy/pharmacy.service';
 import { AdtService } from '../adt/adt.service';
+import { NursingService } from '../nursing/nursing.service';
+import { ClinicalTimelineItem } from '../nursing/nursing-timeline.types';
 import { COMMON_ICD10 } from './data/icd10-common';
 import { checkDrugInteractions } from './data/drug-interactions-common';
 import { Role } from '../../common/enums/roles.enum';
@@ -26,6 +28,7 @@ export class EmrService {
     private usersService: UsersService,
     private pharmacyService: PharmacyService,
     private adtService: AdtService,
+    private nursingService: NursingService,
   ) {}
 
   async create(dto: CreateEmrDto, currentUser?: { id?: string; role?: string }): Promise<EmrRecord> {
@@ -224,13 +227,35 @@ export class EmrService {
         throw new ForbiddenException('You can only access your own EMR records');
       }
     }
+    const cap = Math.min(500, Math.max(1, take));
     const rows = await this.repo.find({
       where: { patient: { id: patientId } },
       order: { createdAt: 'DESC' },
-      take: Math.min(500, Math.max(1, take)),
+      take: cap,
       relations: ['doctor'],
     });
-    return rows.map((r) => this.mapTimelineRow(r, currentUser?.role));
+    const emrItems = rows.map((r) => this.mapTimelineRow(r, currentUser?.role));
+    const nursingItems = await this.nursingService.buildNursingTimeline(patientId, cap);
+    return this.mergeClinicalTimeline(emrItems, nursingItems, cap);
+  }
+
+  private mergeClinicalTimeline(
+    emrItems: Array<Record<string, unknown> & { at: string }>,
+    nursingItems: ClinicalTimelineItem[],
+    take: number,
+  ) {
+    const nursingMapped = nursingItems.map((n) => ({
+      kind: n.kind,
+      id: n.id,
+      at: n.at,
+      title: n.title,
+      summary: n.summary,
+      meta: n.meta,
+      nursing: true,
+    }));
+    return [...emrItems, ...nursingMapped]
+      .sort((a, b) => String(b.at).localeCompare(String(a.at)))
+      .slice(0, take);
   }
 
   async findByPatient(patientId: string, page = 1, limit = 20) {

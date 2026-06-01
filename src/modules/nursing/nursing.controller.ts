@@ -20,6 +20,7 @@ import {
   RecordEwsDto,
   UpdateCarePlanDto,
   UpdateEmarDto,
+  ScheduleEmarFromPrescriptionsDto,
 } from './dto/nursing.dto';
 
 @Controller('nursing')
@@ -67,6 +68,11 @@ export class NursingController {
     return this.svc.updateCarePlan(patientId, planId, dto);
   }
 
+  @Get('ews/alerts')
+  listEwsAlerts(@Query('limit') limit?: string) {
+    return this.svc.listEwsAlerts(limit ? +limit : 30);
+  }
+
   @Get('patients/:patientId/ews')
   listEws(@Param('patientId') patientId: string) {
     return this.svc.listEws(patientId);
@@ -82,9 +88,29 @@ export class NursingController {
     return this.svc.recordEws(patientId, user.id, dto);
   }
 
+  @Get('patients/:patientId/timeline')
+  nursingTimeline(@Param('patientId') patientId: string, @Query('limit') limit?: string) {
+    return this.svc.buildNursingTimeline(patientId, limit ? +limit : 80);
+  }
+
   @Get('patients/:patientId/emar')
   listEmar(@Param('patientId') patientId: string) {
     return this.svc.listEmar(patientId);
+  }
+
+  @Get('patients/:patientId/emar/due')
+  listDueEmar(@Param('patientId') patientId: string) {
+    return this.svc.listDueEmar(patientId);
+  }
+
+  @Post('patients/:patientId/emar/from-prescriptions')
+  @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
+  scheduleEmarFromRx(
+    @Param('patientId') patientId: string,
+    @CurrentUser() user: { id: string },
+    @Body() dto: ScheduleEmarFromPrescriptionsDto,
+  ) {
+    return this.svc.scheduleEmarFromPrescriptions(patientId, user.id, dto);
   }
 
   @Post('patients/:patientId/emar')

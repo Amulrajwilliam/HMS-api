@@ -10,6 +10,7 @@ import { UsersModule } from '../users/users.module';
 import { PharmacyModule } from '../pharmacy/pharmacy.module';
 import { AdtModule } from '../adt/adt.module';
 import { Appointment } from '../appointments/entities/appointment.entity';
+import { NursingModule } from '../nursing/nursing.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { Appointment } from '../appointments/entities/appointment.entity';
     UsersModule,
     PharmacyModule,
     AdtModule,
+    NursingModule,
   ],
   providers: [EmrService],
   controllers: [EmrController],

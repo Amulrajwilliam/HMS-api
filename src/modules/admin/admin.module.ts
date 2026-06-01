@@ -22,5 +22,6 @@ import { BillableServicesService } from './billable-services.service';
   ],
   providers: [AdminService, DepartmentsService, BillableServicesService],
   controllers: [AdminController],
+  exports: [AdminService],
 })
 export class AdminModule {}

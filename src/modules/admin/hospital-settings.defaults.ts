@@ -3,6 +3,8 @@ export const DEFAULT_SECURITY = {
   maxLoginAttempts: 5,
   passwordMinLength: 8,
   enforce2faAdmin: false,
+  /** When true, all staff roles (non-patient) must use TOTP at login. */
+  enforce2faStaff: false,
   auditLog: true,
   ipWhitelist: false,
   /** When ipWhitelist is true, only these client IPs may call non-@Public routes (IPv4 exact, `10.*` wildcard, or CIDR). Empty = allow all (avoid lockout). */
@@ -45,6 +47,7 @@ export type HospitalSettingsPayload = {
     maxLoginAttempts: number;
     passwordMinLength: number;
     enforce2faAdmin: boolean;
+    enforce2faStaff: boolean;
     auditLog: boolean;
     ipWhitelist: boolean;
     allowedIps: string[];
@@ -80,6 +83,7 @@ export function normalizeHospitalSettings(raw: unknown): HospitalSettingsPayload
     maxLoginAttempts: asInt(rs.maxLoginAttempts, ds.maxLoginAttempts),
     passwordMinLength: asInt(rs.passwordMinLength, ds.passwordMinLength),
     enforce2faAdmin: Boolean(rs.enforce2faAdmin ?? ds.enforce2faAdmin),
+    enforce2faStaff: Boolean(rs.enforce2faStaff ?? ds.enforce2faStaff),
     auditLog: Boolean(rs.auditLog ?? ds.auditLog),
     ipWhitelist: Boolean(rs.ipWhitelist ?? ds.ipWhitelist),
     allowedIps: mergedIps.length ? mergedIps : [...ds.allowedIps],

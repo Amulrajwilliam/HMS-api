@@ -57,3 +57,8 @@ export class UpdateEmarDto {
   @IsEnum(EmarStatus) status: EmarStatus;
   @IsOptional() @IsString() @MaxLength(2000) notes?: string;
 }
+
+export class ScheduleEmarFromPrescriptionsDto {
+  @IsOptional() @IsUUID() sourceEmrRecordId?: string;
+  @IsOptional() @IsBoolean() includeDispensed?: boolean;
+}

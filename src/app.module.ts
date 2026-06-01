@@ -25,6 +25,7 @@ import { SyncModule } from './modules/sync/sync.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { NursingModule } from './modules/nursing/nursing.module';
+import { FrontdeskModule } from './modules/frontdesk/frontdesk.module';
 import { IpAllowlistModule } from './common/guards/ip-allowlist.module';
 import { CommonServicesModule } from './common/common-services.module';
 
@@ -88,6 +89,7 @@ import { AppService } from './app.service';
     AnalyticsModule,
     AuditModule,
     NursingModule,
+    FrontdeskModule,
     IpAllowlistModule,
     CommonServicesModule,
   ],

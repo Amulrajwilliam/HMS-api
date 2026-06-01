@@ -53,6 +53,7 @@ export class NursingEwsScore {
   @Column({ type: 'int', nullable: true }) systolicBp: number | null;
   @Column({ type: 'int', nullable: true }) pulse: number | null;
   @Column({ type: 'varchar', length: 8, nullable: true }) consciousness: string | null;
+  @Column({ type: 'varchar', length: 16, nullable: true }) riskBand: string | null;
   @Column({ type: 'uuid', nullable: true }) recordedByUserId: string | null;
   @CreateDateColumn() createdAt: Date;
 }
@@ -76,6 +77,8 @@ export class EmarAdministration {
   @Column({ type: 'varchar', length: 16, default: EmarStatus.SCHEDULED })
   status: EmarStatus;
   @Column({ type: 'uuid', nullable: true }) administeredByUserId: string | null;
+  @Column({ type: 'uuid', nullable: true }) prescriptionFulfillmentId: string | null;
+  @Column({ type: 'uuid', nullable: true }) sourceEmrRecordId: string | null;
   @Column({ type: 'text', nullable: true }) notes: string | null;
   @CreateDateColumn() createdAt: Date;
   @UpdateDateColumn() updatedAt: Date;

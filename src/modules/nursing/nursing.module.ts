@@ -9,6 +9,9 @@ import {
 import { NursingService } from './nursing.service';
 import { NursingController } from './nursing.controller';
 import { PatientsModule } from '../patients/patients.module';
+import { PharmacyModule } from '../pharmacy/pharmacy.module';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { AdtModule } from '../adt/adt.module';
 
 @Module({
   imports: [
@@ -19,6 +22,9 @@ import { PatientsModule } from '../patients/patients.module';
       EmarAdministration,
     ]),
     PatientsModule,
+    PharmacyModule,
+    NotificationsModule,
+    AdtModule,
   ],
   controllers: [NursingController],
   providers: [NursingService],
