@@ -135,13 +135,17 @@ export async function seedDatabase(dataSource: DataSource) {
   const appointmentRepo = dataSource.getRepository(Appointment);
   const labTestRepo = dataSource.getRepository(LabTest);
 
-  // Seed users
+  // Seed users — in dev, keep demo passwords in sync so all roles can sign in with Demo@1234
+  const demoPasswordHash = await bcrypt.hash('Demo@1234', 12);
+  const syncDemoPasswords = process.env.NODE_ENV !== 'production';
   for (const u of DEMO_USERS) {
     const exists = await userRepo.findOne({ where: { email: u.email } });
     if (!exists) {
-      const password = await bcrypt.hash('Demo@1234', 12);
-      await userRepo.save(userRepo.create({ ...u, password }));
+      await userRepo.save(userRepo.create({ ...u, password: demoPasswordHash }));
       console.log(`  ✅ Created user: ${u.email}`);
+    } else if (syncDemoPasswords) {
+      await userRepo.update(exists.id, { password: demoPasswordHash, isActive: true });
+      console.log(`  🔄 Demo password synced: ${u.email}`);
     }
   }
 

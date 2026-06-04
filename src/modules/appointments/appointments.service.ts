@@ -102,7 +102,7 @@ export class AppointmentsService {
     const limit = 50;
     const [data, total] = await this.repo.findAndCount({
       where: { patient: { id: patient.id } },
-      order: { date: 'DESC', time: 'DESC' },
+      order: { date: 'ASC', time: 'ASC' },
       take: limit,
     });
     return { data, total, page: 1, pages: Math.max(1, Math.ceil(total / limit)) };
@@ -149,6 +149,18 @@ export class AppointmentsService {
   async cancel(id: string, reason?: string): Promise<Appointment> {
     await this.repo.update(id, { status: AppointmentStatus.CANCELLED, cancellationReason: reason });
     return this.findById(id);
+  }
+
+  async cancelForPatientUser(
+    appointmentId: string,
+    user: { id: string; email?: string },
+    reason?: string,
+  ): Promise<Appointment> {
+    const apt = await this.findOneForPatientUser(appointmentId, user);
+    if (![AppointmentStatus.SCHEDULED, AppointmentStatus.CONFIRMED].includes(apt.status)) {
+      throw new BadRequestException('Only scheduled or confirmed visits can be cancelled');
+    }
+    return this.cancel(apt.id, reason);
   }
 
   async countToday(): Promise<number> {

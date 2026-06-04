@@ -31,6 +31,16 @@ export class AppointmentsController {
     return this.svc.findOneForPatientUser(id, user);
   }
 
+  @Patch('mine/:id/cancel')
+  @Roles(Role.PATIENT)
+  cancelMine(
+    @Param('id') id: string,
+    @Body('reason') reason: string | undefined,
+    @CurrentUser() user: any,
+  ) {
+    return this.svc.cancelForPatientUser(id, user, reason);
+  }
+
   @Get()
   @Roles(Role.ADMIN, Role.DOCTOR, Role.RECEPTIONIST, Role.NURSE, Role.BILLING)
   findAll(
@@ -65,8 +75,11 @@ export class AppointmentsController {
   }
 
   @Patch(':id/cancel')
-  @Roles(Role.ADMIN, Role.DOCTOR, Role.RECEPTIONIST, Role.NURSE)
-  cancel(@Param('id') id: string, @Body('reason') reason?: string) {
+  @Roles(Role.ADMIN, Role.DOCTOR, Role.RECEPTIONIST, Role.NURSE, Role.PATIENT)
+  cancel(@Param('id') id: string, @Body('reason') reason?: string, @CurrentUser() user?: any) {
+    if (user?.role === Role.PATIENT) {
+      return this.svc.cancelForPatientUser(id, user, reason);
+    }
     return this.svc.cancel(id, reason);
   }
 }
