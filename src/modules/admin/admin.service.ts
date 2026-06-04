@@ -111,6 +111,7 @@ export class AdminService {
         faviconUrl: settings.branding.faviconUrl ?? '',
         appTitle: settings.branding.appTitle ?? '',
       },
+      updatedAt: row?.updatedAt?.toISOString?.() ?? null,
     };
   }
 
@@ -140,14 +141,10 @@ export class AdminService {
     return { stream: createReadStream(full), contentType };
   }
 
-  /**
-   * Saves an uploaded image and writes its public URL path into hospital settings.
-   * @param apiPublicPrefix e.g. `http://localhost:8000/api/v1` (no trailing slash)
-   */
+  /** Saves an uploaded image and writes a portable `/api/v1/...` path into hospital settings. */
   async uploadBrandingAsset(
     kind: 'logo' | 'favicon',
     file: Express.Multer.File | undefined,
-    apiPublicPrefix: string,
   ): Promise<{
     urlPath: string;
     settings: ReturnType<typeof normalizeHospitalSettings>;
@@ -176,8 +173,7 @@ export class AdminService {
     const full = path.join(BRANDING_DIR, fileName);
     await writeFile(full, file.buffer);
 
-    const base = apiPublicPrefix.replace(/\/$/, '');
-    const urlPath = `${base}/admin/hospital-settings/branding-assets/${fileName}`;
+    const urlPath = `/api/v1/admin/hospital-settings/branding-assets/${fileName}`;
 
     let row = await this.hospitalSettingsRepo.findOne({ where: { id: SINGLETON_ID } });
     if (!row) {

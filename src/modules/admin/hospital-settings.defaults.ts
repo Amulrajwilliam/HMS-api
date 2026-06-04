@@ -67,12 +67,25 @@ function asStringArray(v: unknown): string[] {
     .filter(Boolean);
 }
 
+/** Store and serve portable relative paths for uploaded branding files. */
+export function normalizeBrandingAssetStoredUrl(stored: string): string {
+  if (!stored?.trim()) return '';
+  const s = stored.trim();
+  const match = s.match(/\/admin\/hospital-settings\/branding-assets\/[a-zA-Z0-9._-]+/i);
+  if (!match) return s;
+  const segment = match[0];
+  return segment.startsWith('/api/v1') ? segment : `/api/v1${segment}`;
+}
+
 export function normalizeHospitalSettings(raw: unknown): HospitalSettingsPayload {
   const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, any>;
   const g = { ...HOSPITAL_SETTINGS_DEFAULTS.general, ...(r.general ?? {}) } as Record<string, string>;
   const b = { ...HOSPITAL_SETTINGS_DEFAULTS.branding, ...(r.branding ?? {}) } as Record<string, string>;
   for (const k of ['logoUrl', 'faviconUrl', 'appTitle'] as const) {
     if (typeof b[k] !== 'string') b[k] = HOSPITAL_SETTINGS_DEFAULTS.branding[k] ?? '';
+    if (k === 'logoUrl' || k === 'faviconUrl') {
+      b[k] = normalizeBrandingAssetStoredUrl(b[k]);
+    }
   }
   const n = { ...HOSPITAL_SETTINGS_DEFAULTS.notifications, ...(r.notifications ?? {}) } as Record<string, boolean>;
   const rs = (r.security ?? {}) as Record<string, unknown>;

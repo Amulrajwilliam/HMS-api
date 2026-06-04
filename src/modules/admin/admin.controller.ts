@@ -52,7 +52,7 @@ export class AdminController {
   async getBrandingAsset(@Param('fileName') fileName: string, @Res({ passthrough: true }) res: Response) {
     const { stream, contentType } = await this.adminService.readBrandingAsset(fileName);
     res.setHeader('Content-Type', contentType);
-    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.setHeader('Cache-Control', 'public, max-age=300, must-revalidate');
     return new StreamableFile(stream);
   }
 
@@ -92,10 +92,7 @@ export class AdminController {
     if (kind !== 'logo' && kind !== 'favicon') {
       throw new BadRequestException('Query "kind" must be logo or favicon');
     }
-    const proto = req.protocol;
-    const host = req.get('host') || 'localhost';
-    const apiPublicPrefix = `${proto}://${host}/api/v1`;
-    return this.adminService.uploadBrandingAsset(kind as 'logo' | 'favicon', file, apiPublicPrefix);
+    return this.adminService.uploadBrandingAsset(kind as 'logo' | 'favicon', file);
   }
 
   @Get('doctor-profiles/:userId')
